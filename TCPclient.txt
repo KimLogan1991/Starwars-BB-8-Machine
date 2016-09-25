@@ -1,0 +1,48 @@
+# 소켓서버에 연결
+public void onClick(View arg0) {
+		if(arg0 == buttonConnect)
+		{
+			imm.hideSoftInputFromWindow(editTextIPAddress.getWindowToken(), 0);
+			
+			try{
+				if(socket!=null)
+				{
+					socket.close();
+					socket = null;
+				}
+				
+				server = editTextIPAddress.getText().toString();
+				port = Integer.parseInt(editTextPort.getText().toString());
+				socket = new Socket(server, port);
+				outs = socket.getOutputStream();
+
+				rcvThread = new Thread(new rcvthread(logger, socket));
+    		    rcvThread.start();
+				logger.log("Connected");
+			} catch (IOException e){
+				logger.log("Fail to connect");
+				e.printStackTrace();
+			}
+		}
+# GPIO 앞뒤좌우 제어
+if(arg0 == button1 || arg0 == button2 || arg0 == button3 || arg0 == button4 || arg0 == button5 )
+		{
+			String sndOpkey = "CMD";
+			
+			if(arg0 == button1)	    sndOpkey = "Forward";
+			if(arg0 == button2)	    sndOpkey = "Back";
+			if(arg0 == button3)	    sndOpkey = "Left";
+			if(arg0 == button4)	    sndOpkey = "Right";
+			if(arg0 == button5)	    sndOpkey = "Stop";
+			//if(arg0 == buttonLeftTurn)	sndOpkey = "LeftTurn";
+			//if(arg0 == buttonRightTurn)	sndOpkey = "RightTurn";
+			//if(arg0 == buttonDown)	    sndOpkey = "Down";
+
+			try{
+				outs.write(sndOpkey.getBytes("UTF-8"));
+				outs.flush();
+			} catch (IOException e){
+				logger.log("Fail to send");
+				e.printStackTrace();
+			}
+		}
