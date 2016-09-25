@@ -1,0 +1,86 @@
+import socket
+import sys
+import select
+import thread
+
+import RPi.GPIO as GPIO
+import time
+
+
+# set the addresses
+HOST = '' #all available interfaces
+PORT = 8888
+
+# open Socket
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+print ('Socket created')
+
+# bind to a address and port
+try:
+    s.bind((HOST, PORT))
+except socket.error as msg:
+    print ('Bind Failed. Error code: ' + str(msg[0]) + ' Message: ' + msg[1])
+    sys.exit()
+
+print ('Socket bind complete')
+
+# Listen for incoming connections
+s.listen(10)
+print ('Socket now listening')
+
+# set the GPIO Pins
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+
+GPIO.setup(8, GPIO.OUT)
+GPIO.setup(10, GPIO.OUT)
+GPIO.setup(16, GPIO.OUT)
+GPIO.setup(18, GPIO.OUT)
+
+p = GPIO.PWM(8, 50)
+p = GPIO.PWM(10, 50)
+
+# keep talking with the client
+while True :
+	# Acception
+	conn, addr= s.accept()
+	print ('Connected with ' + addr[0] + ':' + str(addr[1]))
+	
+	while True :
+		s.listen(10)
+		data = conn.recv(1024)
+		if data.decode() == 'Forward' :
+			GPIO.ouput(16,True)
+			GPIO.ouput(18,True)
+			conn.sendall(data)
+			time.sleep(1)
+    if data.decode() == 'Back' :
+			GPIO.ouput(16,False)
+			GPIO.ouput(18,False)
+			conn.sendall(data)
+			time.sleep(1)
+		if data.decode() == 'Right' :
+			p.ChangeDutyCycle(7.5)
+			GPIO.ouput(16,True)
+			GPIO.ouput(18,True)
+			conn.sendall(data)
+			time.sleep(1)
+		if data.decode() == 'left' :
+			p.ChangeDutyCycle(2.5)
+			GPIO.ouput(16,True)
+			GPIO.ouput(18,True)
+			conn.sendall(data)
+			time.sleep(1)
+		if data.decode() == 'stop' :
+			p.stop()
+			GPIO.cleanup()
+			GPIO.ouput(16,False)
+			GPIO.ouput(18,False)
+			conn.sendall(data)
+			time.sleep(1)
+			break
+
+		if data.decode() == 'close' :
+			conn.close()
+			break
+
